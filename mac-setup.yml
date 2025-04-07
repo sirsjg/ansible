@@ -12,6 +12,7 @@
       - python
       - dotnet-sdk
       - flutter
+      - node # need for claude install
 
     homebrew_casks:
       - google-chrome
@@ -36,7 +37,6 @@
       - miro
       - proton-drive
       - notion
-      - claude
 
     directories_to_create:
       - ~/dev
@@ -97,6 +97,12 @@
         name: "{{ item }}"
         state: present
       loop: "{{ homebrew_casks }}"
+
+    - name: Install @anthropic-ai/claude-code globally using npm
+      community.general.npm:
+        name: "@anthropic-ai/claude-code"
+        state: latest
+        global: yes
 
     - name: Create specified directories
       ansible.builtin.file:

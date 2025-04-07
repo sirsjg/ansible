@@ -1,0 +1,115 @@
+---
+- name: Configure macOS Workstation
+  hosts: localhost
+  connection: local
+  become: no
+
+  vars:
+
+    homebrew_packages:
+      - git
+      - nvm
+      - python
+      - dotnet-sdk
+      - flutter
+
+    homebrew_casks:
+      - google-chrome
+      - firefox
+      - warp
+      - rectangle
+      - betterdisplay
+      - istatistica-core
+      - postman
+      - lens
+      - visual-studio-code
+      - android-studio
+      - docker
+      - sublime-text
+      - rider
+      - datagrip
+      - gitkraken
+      - ollama
+      - whatsapp
+      - signal
+      - spotify
+      - miro
+      - proton-drive
+
+    directories_to_create:
+      - ~/dev
+      - ~/Documents/Screenshots
+
+  tasks:
+    - name: Ensure Homebrew is installed
+      block:
+        - name: Check if Homebrew is installed (Apple Silicon path)
+          stat:
+            path: "/opt/homebrew/bin/brew"
+          register: homebrew_stat_arm
+
+        - name: Check if Homebrew is installed (Intel path)
+          stat:
+            path: "/usr/local/bin/brew"
+          register: homebrew_stat_intel
+
+        - name: Install Homebrew (if not found)
+          shell: |
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          args:
+            creates: "{{ '/opt/homebrew/bin/brew' if homebrew_stat_arm.stat.exists else ('/usr/local/bin/brew' if homebrew_stat_intel.stat.exists else '/opt/homebrew/bin/brew') }}"
+          when: not homebrew_stat_arm.stat.exists and not homebrew_stat_intel.stat.exists
+          environment:
+              NONINTERACTIVE: "true"
+          register: homebrew_install_command
+
+    - name: Ensure core Homebrew path is in PATH (Apple Silicon)
+      ansible.builtin.lineinfile:
+          path: ~/.zprofile
+          line: 'eval "$(/opt/homebrew/bin/brew shellenv)"'
+          create: yes
+          state: present
+      when: homebrew_stat_arm.stat.exists or (homebrew_install_command is defined and homebrew_install_command.changed and "Apple Silicon" in homebrew_install_command.stdout | default(''))
+
+    - name: Ensure core Homebrew path is in PATH (Intel)
+      ansible.builtin.lineinfile:
+          path: ~/.zprofile
+          line: 'eval "$(/usr/local/bin/brew shellenv)"'
+          create: yes
+          state: present
+      when: homebrew_stat_intel.stat.exists or (homebrew_install_command is defined and homebrew_install_command.changed and "Intel" in homebrew_install_command.stdout | default(''))
+
+    - name: Update Homebrew and Upgrade installed packages
+      community.general.homebrew:
+        update_homebrew: yes
+        upgrade_all: yes
+
+    - name: Install Homebrew packages (Formulae)
+      community.general.homebrew:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ homebrew_packages }}"
+
+    - name: Install open-webui using pip
+      ansible.builtin.pip:
+        name: open-webui
+        state: present
+        executable: pip3
+
+    - name: Install Homebrew Cask applications (GUI Apps)
+      community.general.homebrew_cask:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ homebrew_casks }}"
+
+    - name: Create specified directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ directories_to_create }}"
+
+    - name: Display final message
+      ansible.builtin.debug:
+        msg: |
+          macOS setup playbook complete.

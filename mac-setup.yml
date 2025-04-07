@@ -35,6 +35,7 @@
       - spotify
       - miro
       - proton-drive
+      - notion
 
     directories_to_create:
       - ~/dev

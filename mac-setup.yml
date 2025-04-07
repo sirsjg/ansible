@@ -36,6 +36,7 @@
       - miro
       - proton-drive
       - notion
+      - claude
 
     directories_to_create:
       - ~/dev
@@ -90,12 +91,6 @@
         name: "{{ item }}"
         state: present
       loop: "{{ homebrew_packages }}"
-
-    - name: Install open-webui using pip
-      ansible.builtin.pip:
-        name: open-webui
-        state: present
-        executable: pip3
 
     - name: Install Homebrew Cask applications (GUI Apps)
       community.general.homebrew_cask:

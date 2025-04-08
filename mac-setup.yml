@@ -37,6 +37,7 @@
       - miro
       - proton-drive
       - notion
+      - neohtop
 
     directories_to_create:
       - ~/dev

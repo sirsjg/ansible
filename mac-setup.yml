@@ -12,6 +12,8 @@
       - python
       - dotnet-sdk
       - flutter
+      - go
+      - rust
       - node # need for claude install
 
     homebrew_casks:
